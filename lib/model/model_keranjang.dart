@@ -26,12 +26,14 @@ class ModelKeranjang {
 }
 
 class Keranjang {
+  int id_keranjang;
   String nama_produk;
   int jumlah;
   int harga;
   int subtotal;
 
   Keranjang({
+    required this.id_keranjang,
     required this.nama_produk,
     required this.harga,
     required this.jumlah,
@@ -39,6 +41,7 @@ class Keranjang {
   });
 
   factory Keranjang.fromJson(Map<String, dynamic> json) => Keranjang(
+    id_keranjang: json["id_keranjang"],
     nama_produk: json["nama_produk"],
     harga: json["harga"],
     jumlah: json["jumlah"],
@@ -46,6 +49,7 @@ class Keranjang {
   );
 
   Map<String, dynamic> toJson() => {
+    "id_keranjang": id_keranjang,
     "nama_produk": nama_produk,
     "harga": harga,
     "jumlah": jumlah,

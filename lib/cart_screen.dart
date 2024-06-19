@@ -6,14 +6,17 @@ import 'package:project_ecommerce/model/model_keranjang.dart';
 import 'package:project_ecommerce/profile.dart';
 import 'package:project_ecommerce/utils/session_manager.dart';
 import 'checkout_screen.dart';
-import 'home_page.dart';
-import 'login.dart';
 import 'model/model_user.dart';
 import 'navigation_page.dart';
 import 'order_screen.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
+  // final ModelKeranjang keranjang;
+  //
+  // const CartScreen({Key? key, required this.keranjang})
+  //     : super(key: key);
+
 
   @override
   State<CartScreen> createState() => _CartScreen();
@@ -56,6 +59,48 @@ class _CartScreen extends State<CartScreen> with WidgetsBindingObserver {
       });
     }
   }
+
+  Future<void> deleteKeranjang(String idKeranjang) async {
+    final String apiUrl = 'http://192.168.1.12/kelompok4/deleteKeranjang.php';
+
+    final response = await http.post(
+      Uri.parse(apiUrl),
+      body: {"id_keranjang": idKeranjang},
+    );
+
+    if (response.statusCode == 200) {
+      final responseData = jsonDecode(response.body);
+      if (responseData['isSuccess']) {
+        setState(() {
+          _fetchKeranjang();
+          // _keranjangList.removeAt(idKeranjang.toString() as int);
+          // _filteredKeranjangList = List.from(_keranjangList);
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(responseData['message'])),
+        );
+      } else {
+        throw Exception(responseData['message']);
+      }
+    } else {
+      throw Exception('Failed to delete data');
+    }
+  }
+
+  // Future<void> deleteKeranjang(String id_keranjang) async {
+  //   final url = Uri.parse('http://192.168.1.12/kelompok4/deleteKeranjang.php');
+  //   final body = {'id_keranjang': id_keranjang}; // Ensure 'idKeranjang' is populated
+  //
+  //   final response = await http.post(url, body: jsonEncode(body));
+  //
+  //   if (response.statusCode == 200) {
+  //     print('Produk data for category $id_keranjang deleted successfully.');
+  //     // Update your UI to reflect the deletion (e.g., remove deleted products from lists)
+  //   } else {
+  //     print('Error deleting produk data: ${response.statusCode}');
+  //     // Handle errors (e.g., show a toast message to the user)
+  //   }
+  // }
 
   void _filterKeranjangList(String query) {
     setState(() {
@@ -136,6 +181,7 @@ class _CartScreen extends State<CartScreen> with WidgetsBindingObserver {
     });
   }
 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -183,11 +229,19 @@ class _CartScreen extends State<CartScreen> with WidgetsBindingObserver {
                                 keranjang.nama_produk,
                                 style: TextStyle(fontSize: 16),
                               ),
-                              Icon(
-                                Icons.close,
-                                size: 20,
-                                color: Colors.red,
-                              ),
+                              IconButton(
+                                      icon: Icon(
+                                        Icons.close,
+                                        size: 20,
+                                        color: Colors.red,
+                                      ),
+                                onPressed: () => deleteKeranjang(keranjang.id_keranjang.toString()),
+                                    ),
+                                    // Icon(
+                              //   Icons.close,
+                              //   size: 20,
+                              //   color: Colors.red,
+                              // ),
                             ],
                           ),
                           // Text(

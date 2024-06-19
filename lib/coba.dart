@@ -1262,7 +1262,7 @@ class _PageMulaiState extends State<PageMulai> with TickerProviderStateMixin {
                           ),
                           elevation: 4,
                           child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               ClipRRect(
                                 borderRadius: BorderRadius.vertical(
@@ -1271,8 +1271,8 @@ class _PageMulaiState extends State<PageMulai> with TickerProviderStateMixin {
                                 child: Image.network(
                                   // product.image,
                                   'http://192.168.1.12/kelompok4/${product.gambar}',
-                                  height:400,
-                                  width: double.infinity,
+                                  height:150,
+                                  width: 200,
                                   fit: BoxFit.cover,
                                 ),
                               ),

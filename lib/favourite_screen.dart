@@ -20,7 +20,7 @@ class FavouriteScreen extends StatefulWidget {
 class _FavouriteScreen extends State<FavouriteScreen> with WidgetsBindingObserver {
   late ModelUsers currentUser; // Nullable currentUser
   int _selectedIndex = 0;
-  // late List<Datum> _sejarawanList;
+  // late List<> _sejarawanList;
   // late List<Datum> _filteredSejarawanList;
   late bool _isLoading;
 
