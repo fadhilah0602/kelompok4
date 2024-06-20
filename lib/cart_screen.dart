@@ -24,6 +24,8 @@ class CartScreen extends StatefulWidget {
 
 class _CartScreen extends State<CartScreen> with WidgetsBindingObserver {
   late ModelUsers currentUser;
+  late Keranjang keranjang;
+
   int _selectedIndex = 1;
   List<Keranjang> _keranjangList = [];
   List<Keranjang> _filteredKeranjangList = [];
@@ -308,7 +310,7 @@ class _CartScreen extends State<CartScreen> with WidgetsBindingObserver {
                                           context,
                                           MaterialPageRoute(
                                               builder: (context) =>
-                                                  CheckoutScreen()),
+                                                  CheckoutScreen(data: keranjang)),
                                         );
                                       },
                                       child: TextButton(
@@ -317,7 +319,7 @@ class _CartScreen extends State<CartScreen> with WidgetsBindingObserver {
                                             context,
                                             MaterialPageRoute(
                                                 builder: (context) =>
-                                                    CheckoutScreen()),
+                                                    CheckoutScreen(data: keranjang)),
                                           );
                                         },
                                         child: Text('Checkout'),

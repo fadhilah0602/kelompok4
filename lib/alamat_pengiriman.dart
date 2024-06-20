@@ -1,6 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart';
+import 'package:http/http.dart';
+import 'package:project_ecommerce/checkout_screen.dart';
 import 'package:project_ecommerce/detail_product.dart';
+import 'package:project_ecommerce/model/model_addAlamatPengiriman.dart';
 import 'package:project_ecommerce/profile.dart';
 import 'package:project_ecommerce/utils/session_manager.dart';
 import 'cart_screen.dart';
@@ -9,21 +13,29 @@ import 'home_page.dart';
 import 'login.dart';
 import 'model/model_user.dart';
 import 'order_screen.dart';
+import 'package:http/http.dart' as http;
 
 class AlamatPengiriman extends StatefulWidget {
-  const AlamatPengiriman({super.key});
+  const AlamatPengiriman({Key? key}) : super(key: key);
 
   @override
   State<AlamatPengiriman> createState() => _AlamatPengiriman();
 }
 
 class _AlamatPengiriman extends State<AlamatPengiriman> with WidgetsBindingObserver {
+  TextEditingController _nama = TextEditingController();
+  TextEditingController _noHp = TextEditingController();
+  TextEditingController _alamat = TextEditingController();
+  TextEditingController _kodePos = TextEditingController();
   String? _name;
   late ModelUsers currentUser; // Nullable currentUser
   int _selectedIndex = 0;
   // late List<Datum> _sejarawanList;
   // late List<Datum> _filteredSejarawanList;
   late bool _isLoading;
+
+  bool isLoading = false;
+  String? _userId;
 
   @override
   void initState() {
@@ -33,6 +45,14 @@ class _AlamatPengiriman extends State<AlamatPengiriman> with WidgetsBindingObser
     _isLoading = true;
     // _fetchSejarawan();
     // _filteredSejarawanList = [];
+    _loadUserId();
+  }
+
+  Future<void> _loadUserId() async {
+    await sessionManager.getSession();
+    setState(() {
+      _userId = sessionManager.id_user;
+    });
   }
 
   // Future<void> _fetchSejarawan() async {
@@ -153,6 +173,71 @@ class _AlamatPengiriman extends State<AlamatPengiriman> with WidgetsBindingObser
     });
   }
 
+Future<void> addAlamatPengiriman() async {
+  if (_nama.text.isEmpty || _noHp.text.isEmpty || _alamat.text.isEmpty || _kodePos.text.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Semua field harus diisi')),
+    );
+    return;
+  }
+
+  if (_userId == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('User ID tidak ditemukan')),
+    );
+    return;
+  }
+
+  setState(() {
+    isLoading = true;
+  });
+
+  try {
+    Uri uri = Uri.parse('http://192.168.1.12/kelompok4/addDeliveryAddress.php');
+
+    http.MultipartRequest request = http.MultipartRequest('POST', uri)
+      ..fields['id_user'] = _userId! // Menambahkan id_user
+      ..fields['nama'] = _nama.text
+      ..fields['no_hp'] = _noHp.text
+      ..fields['kode_pos'] = _kodePos.text
+      ..fields['alamat'] = _alamat.text; // set status
+
+    http.StreamedResponse response = await request.send();
+    String responseBody = await response.stream.bytesToString();
+    print("Server response: $responseBody");
+
+    if (response.statusCode == 200) {
+      try {
+        ModelAddAlamatPengiriman data = modelAddAlamatPengirimanFromJson(responseBody);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${data.message}')),
+        );
+        if (data.isSuccess) {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => CartScreen()),
+                (route) => false,
+          );
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to parse response: $e')),
+        );
+      }
+    } else {
+      throw Exception('Failed to upload data, status code: ${response.statusCode}');
+    }
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('An error occurred: $e')),
+    );
+  } finally {
+    setState(() {
+      isLoading = false;
+    });
+  }
+}
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -187,7 +272,7 @@ class _AlamatPengiriman extends State<AlamatPengiriman> with WidgetsBindingObser
                                     ? "Name Tidak Boleh kosong"
                                     : null;
                               },
-                              // controller: _usernameController,
+                              controller: _nama,
                               decoration: InputDecoration(
                                 // fillColor: Colors.white.withOpacity(0.2),
                                 filled: true,
@@ -219,7 +304,7 @@ class _AlamatPengiriman extends State<AlamatPengiriman> with WidgetsBindingObser
                                     ? "No HP Tidak Boleh kosong"
                                     : null;
                               },
-                              // controller: _noHpController,
+                              controller: _noHp,
                               decoration: InputDecoration(
                                 // fillColor: Colors.white.withOpacity(0.2),
                                 filled: true,
@@ -251,7 +336,7 @@ class _AlamatPengiriman extends State<AlamatPengiriman> with WidgetsBindingObser
                                     ? "Alamat Tidak Boleh kosong"
                                     : null;
                               },
-                              // controller: _alamatController,
+                              controller: _alamat,
                               decoration: InputDecoration(
                                 // fillColor: Colors.white.withOpacity(0.2),
                                 filled: true,
@@ -281,7 +366,7 @@ class _AlamatPengiriman extends State<AlamatPengiriman> with WidgetsBindingObser
                                     ? "Kode Pos Tidak Boleh kosong"
                                     : null;
                               },
-                              // controller: _alamatController,
+                              controller: _kodePos,
                               decoration: InputDecoration(
                                 // fillColor: Colors.white.withOpacity(0.2),
                                 filled: true,
@@ -315,19 +400,7 @@ class _AlamatPengiriman extends State<AlamatPengiriman> with WidgetsBindingObser
                                 ),
                               ),
                               onPressed: () {
-                                // Implement logic to save changes
-                                // String newUsername = _usernameController.text;
-                                // String newFullname = _fullnameController.text;
-                                // String newJenisKelamin = _jenisKelaminController.text;
-                                // String newNoHp = _noHpController.text;
-                                // String newAlamat = _alamatController.text;
-                                // String newEmail = _emailController.text; // Ambil nilai dari controller email
-                                // String newRole = _roleController.text;
-                                // String newCreated = _roleController.text;
-                                // String newUpdated = _roleController.text;
-                                //
-                                // // Panggil fungsi untuk menyimpan perubahan
-                                // saveChanges(newUsername,newFullname, newJenisKelamin, newNoHp, newAlamat, newEmail,newRole, newCreated, newUpdated);
+                                addAlamatPengiriman();
                               },
                               child: Text(
                                 'Save',

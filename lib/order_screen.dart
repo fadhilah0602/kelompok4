@@ -1,13 +1,19 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:project_ecommerce/alamat_pengiriman.dart';
 import 'package:project_ecommerce/detail_order.dart';
 import 'package:project_ecommerce/detail_product.dart';
+import 'package:project_ecommerce/model/model_keranjang.dart';
 import 'package:project_ecommerce/profile.dart';
 import 'package:project_ecommerce/utils/session_manager.dart';
 import 'cart_screen.dart';
 import 'edit_profile.dart';
 import 'home_page.dart';
 import 'login.dart';
+import 'model/model_order.dart';
 import 'model/model_user.dart';
+import 'package:http/http.dart' as http;
 
 class OrderScreen extends StatefulWidget {
   const OrderScreen({super.key});
@@ -18,8 +24,12 @@ class OrderScreen extends StatefulWidget {
 
 class _OrderScreen extends State<OrderScreen> with WidgetsBindingObserver {
   late ModelUsers currentUser;
+  late Order pesanan;
+  late AlamatPengiriman alamatPengiriman;
   int _selectedIndex = 0;
-  late bool _isLoading;
+  List<Order> _pesananList = [];
+  late bool _Loading;
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -27,6 +37,28 @@ class _OrderScreen extends State<OrderScreen> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     getDataSession();
     _isLoading = true;
+    _fetchKeranjang();
+  }
+
+  Future<void> _fetchKeranjang() async {
+    try {
+      final response = await http.get(Uri.parse('http://192.168.1.12/kelompok4/order.php?id_user=${sessionManager.id_user}'));
+      if (response.statusCode == 200) {
+        final parsed = jsonDecode(response.body);
+        setState(() {
+          _pesananList = List<Order>.from(parsed['data'].map((x) => Order.fromJson(x)));
+          _isLoading = false;
+        });
+      } else {
+        throw Exception('Failed to load keranjang');
+      }
+    } catch (e) {
+      print('Error fetching products: $e');
+      setState(() {
+        _isLoading = false;
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+      });
+    }
   }
 
   @override
@@ -110,13 +142,17 @@ class _OrderScreen extends State<OrderScreen> with WidgetsBindingObserver {
         title: Text('Pesanan '),
       ),
       backgroundColor: Color(0xFF87CEEB),
-      body: SingleChildScrollView(
-        child: Stack(
+      body:  _isLoading
+          ? Center(child: CircularProgressIndicator())
+          : Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                children: [
+            SizedBox(height: 20),
+            // Padding(
+            //   padding: const EdgeInsets.all(20.0),
+            //   child: Column(
+            //     children: [
                   Padding(
                     padding: const EdgeInsets.only(bottom: 10),
                     child: InkWell(
@@ -139,46 +175,61 @@ class _OrderScreen extends State<OrderScreen> with WidgetsBindingObserver {
                               child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Image.asset(
-                                    'images/img2.png',
-                                    width: 100,
-                                  ),
+                                  // Image.asset(
+                                  //   'images/img2.png',
+                                  //   width: 100,
+                                  // ),
                                   SizedBox(width: 20),
                                   Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          "Langit Biru",
-                                          style: TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        Text(
-                                          "Jumlah : 1",
-                                          style: TextStyle(
-                                            color: Colors.black,
-                                            fontSize: 14,
-                                          ),
-                                        ),
-                                        Text(
-                                          "Rp. 87.000",
-                                          style: TextStyle(
-                                            color: Colors.black,
-                                            fontSize: 14,
-                                          ),
-                                        ),
-                                        SizedBox(height: 20),
-                                        Text(
-                                          "Total Pesanan : Rp. 87.000",
-                                          style: TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
+                                    child: ListView.builder(
+                                        itemCount: _pesananList.length,
+                                        itemBuilder: (context, index) {
+                                          final keranjang = _pesananList[index];
+                                          return Card(
+                                            elevation: 4,
+                                            margin: EdgeInsets.all(8.0),
+                                            child: Padding(
+                                              padding: EdgeInsets.all(16.0),
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    pesanan.nama_produk ?? 'No Title',
+                                                    // "Langit Biru",
+                                                    style: TextStyle(
+                                                      fontSize: 18,
+                                                      fontWeight: FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    "Jumlah : ${pesanan.jumlah}",
+                                                    style: TextStyle(
+                                                      color: Colors.black,
+                                                      fontSize: 14,
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    "Rp. ${pesanan.harga.toStringAsFixed(2)}",
+                                                    style: TextStyle(
+                                                      color: Colors.black,
+                                                      fontSize: 14,
+                                                    ),
+                                                  ),
+                                                  SizedBox(height: 20),
+                                                  Text(
+                                                    "Total Pesanan : ${pesanan.total_bayar.toStringAsFixed(2)}",
+                                                    style: TextStyle(
+                                                      fontSize: 18,
+                                                      fontWeight: FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          );
+                                        }),
+
+
                                   ),
                                 ],
                               ),
@@ -188,9 +239,9 @@ class _OrderScreen extends State<OrderScreen> with WidgetsBindingObserver {
                       ),
                     ),
                   ),
-                ],
-              ),
-            ),
+          //       ],
+          //     ),
+          //   ),
           ],
         ),
       ),

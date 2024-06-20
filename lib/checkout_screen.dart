@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:project_ecommerce/alamat_pengiriman.dart';
 import 'package:project_ecommerce/detail_product.dart';
+import 'package:project_ecommerce/model/model_keranjang.dart';
 import 'package:project_ecommerce/profile.dart';
 import 'package:project_ecommerce/utils/session_manager.dart';
 import 'cart_screen.dart';
@@ -11,29 +12,31 @@ import 'login.dart';
 import 'model/model_user.dart';
 import 'order_screen.dart';
 
-class CheckoutScreen extends StatefulWidget {
-  const CheckoutScreen({super.key});
+class CheckoutScreen extends StatelessWidget {
+  final Keranjang? data;
 
-  @override
-  State<CheckoutScreen> createState() => _CheckoutScreen();
-}
+  const CheckoutScreen({Key? key, this.data}) : super(key: key);
 
-class _CheckoutScreen extends State<CheckoutScreen> with WidgetsBindingObserver {
-  late ModelUsers currentUser; // Nullable currentUser
-  int _selectedIndex = 0;
+//   @override
+//   State<CheckoutScreen> createState() => _CheckoutScreen();
+// }
+
+// class _CheckoutScreen extends State<CheckoutScreen> with WidgetsBindingObserver {
+//   late ModelUsers currentUser; // Nullable currentUser
+//   int _selectedIndex = 0;
   // late List<Datum> _sejarawanList;
   // late List<Datum> _filteredSejarawanList;
-  late bool _isLoading;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this); // Add the observer
-    getDataSession();// Load session data when the widget initializes
-    _isLoading = true;
-    // _fetchSejarawan();
-    // _filteredSejarawanList = [];
-  }
+  // late bool _isLoading;
+  //
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   WidgetsBinding.instance.addObserver(this); // Add the observer
+  //   getDataSession();// Load session data when the widget initializes
+  //   _isLoading = true;
+  //   _fetchSejarawan();
+  //   _filteredSejarawanList = [];
+  // }
 
   // Future<void> _fetchSejarawan() async {
   //   final response = await http
@@ -61,97 +64,97 @@ class _CheckoutScreen extends State<CheckoutScreen> with WidgetsBindingObserver 
   //   });
   // }
 
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this); // Remove the observer
-    super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      getDataSession();
-    }
-  }
-
-  Future<void> getDataSession() async {
-    bool hasSession = await sessionManager.getSession();
-    if (hasSession) {
-      setState(() {
-        // currentUser = ModelUsers(
-        //   id_user: sessionManager.id_user!,
-        //   username: sessionManager.username!,
-        //   email: sessionManager.email!,
-        //   no_hp: sessionManager.no_hp!,
-        //   fullname: sessionManager.fullname!,
-        //   alamat: sessionManager.alamat!,
-        //   role: sessionManager.role!,
-        //   jenis_kelamin: sessionManager.jenis_kelamin!,
-        // );
-      });
-    } else {
-      print('Log Session tidak ditemukan!');
-    }
-  }
-
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-    switch (index) {
-      case 0:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => HomePage()),
-        );
-        break;
-      case 1:
-      // Navigasi ke halaman Keranjang
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => CartScreen()),
-        );
-        break;
-      case 2:
-      // Navigasi ke halaman Pesanan
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => OrderScreen()),
-        );
-        break;
-      case 3:
-
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => ProfilePage(currentUser: currentUser)),
-        );
-        break;
-        // // Tambahkan logika logout
-        //   setState(() {
-        //     sessionManager.clearSession();
-        //     Navigator.pushAndRemoveUntil(
-        //       context,
-        //       MaterialPageRoute(
-        //           builder: (context) =>
-        //               LoginScreen()),
-        //           (route) => false,
-        //     );
-        //   });
-        break;
-      default:
-    }
-  }
-
-  Future<void> _refreshData() async {
-    // Simulate a long-running operation
-    await Future.delayed(Duration(seconds: 2));
-
-    // Fetch new data or update existing data
-    // For example, you can fetch data from an API
-    setState(() {
-      getDataSession();
-    });
-  }
+  // @override
+  // void dispose() {
+  //   WidgetsBinding.instance.removeObserver(this); // Remove the observer
+  //   super.dispose();
+  // }
+  //
+  // @override
+  // void didChangeAppLifecycleState(AppLifecycleState state) {
+  //   if (state == AppLifecycleState.resumed) {
+  //     getDataSession();
+  //   }
+  // }
+  //
+  // Future<void> getDataSession() async {
+  //   bool hasSession = await sessionManager.getSession();
+  //   if (hasSession) {
+  //     setState(() {
+  //       // currentUser = ModelUsers(
+  //         id_user: sessionManager.id_user!,
+  //         username: sessionManager.username!,
+  //         email: sessionManager.email!,
+  //         no_hp: sessionManager.no_hp!,
+  //         fullname: sessionManager.fullname!,
+  //         alamat: sessionManager.alamat!,
+  //         role: sessionManager.role!,
+  //         jenis_kelamin: sessionManager.jenis_kelamin!,
+  //       );
+  //     });
+  //   } else {
+  //     print('Log Session tidak ditemukan!');
+  //   }
+  // }
+  //
+  // void _onItemTapped(int index) {
+  //   setState(() {
+  //     _selectedIndex = index;
+  //   });
+  //   switch (index) {
+  //     case 0:
+  //       Navigator.push(
+  //         context,
+  //         MaterialPageRoute(builder: (context) => HomePage()),
+  //       );
+  //       break;
+  //     case 1:
+  //     // Navigasi ke halaman Keranjang
+  //       Navigator.push(
+  //         context,
+  //         MaterialPageRoute(builder: (context) => CartScreen()),
+  //       );
+  //       break;
+  //     case 2:
+  //     // Navigasi ke halaman Pesanan
+  //       Navigator.push(
+  //         context,
+  //         MaterialPageRoute(builder: (context) => OrderScreen()),
+  //       );
+  //       break;
+  //     case 3:
+  //
+  //       Navigator.push(
+  //         context,
+  //         MaterialPageRoute(builder: (context) => ProfilePage(currentUser: currentUser)),
+  //       );
+  //       break;
+  //       // // Tambahkan logika logout
+  //       //   setState(() {
+  //       //     sessionManager.clearSession();
+  //       //     Navigator.pushAndRemoveUntil(
+  //       //       context,
+  //       //       MaterialPageRoute(
+  //       //           builder: (context) =>
+  //       //               LoginScreen()),
+  //       //           (route) => false,
+  //       //     );
+  //       //   });
+  //       break;
+  //     default:
+  //   }
+  // }
+  //
+  // Future<void> _refreshData() async {
+  //   // Simulate a long-running operation
+  //   await Future.delayed(Duration(seconds: 2));
+  //
+  //   // Fetch new data or update existing data
+  //   // For example, you can fetch data from an API
+  //   setState(() {
+  //     getDataSession();
+  //   });
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -189,34 +192,66 @@ class _CheckoutScreen extends State<CheckoutScreen> with WidgetsBindingObserver 
                                   color: Colors.red,
                                 ),
                                 SizedBox(width: 20),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        "Alamat Pengiriman",
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16.0),
+                                    child: ElevatedButton(
+                                      onPressed: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(builder: (context) => AlamatPengiriman()),
+                                        );
+                                      },
+                                      child: Text("Input Alamat",
                                         style: TextStyle(
-                                          fontSize: 16,
+                                          fontSize: 12,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Color(0xFF00BFFF), // Warna tombol
+                                        padding: EdgeInsets.symmetric(vertical: 16), // Padding tombol
+                                        textStyle: TextStyle(
+                                          color: Colors.white,
                                           fontWeight: FontWeight.bold,
+                                          fontSize: 10,
+                                        ), // Ukuran teks
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(8), // Radius border tombol
                                         ),
                                       ),
-                                      Text(
-                                        "Ani|0812345",
-                                        style: TextStyle(
-                                          color: Colors.black,
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                      Text(
-                                        "Jalan Raya Kalibata",
-                                        style: TextStyle(
-                                          color: Colors.black,
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                    ],
+                                    ),
                                   ),
                                 ),
+                                // Expanded(
+                                //   child: Column(
+                                //     crossAxisAlignment: CrossAxisAlignment.start,
+                                //     children: [
+                                //       Text(
+                                //         "Alamat Pengiriman",
+                                //         style: TextStyle(
+                                //           fontSize: 16,
+                                //           fontWeight: FontWeight.bold,
+                                //         ),
+                                //       ),
+                                //       Text(
+                                //         "Ani|0812345",
+                                //         style: TextStyle(
+                                //           color: Colors.black,
+                                //           fontSize: 14,
+                                //         ),
+                                //       ),
+                                //       Text(
+                                //         "Jalan Raya Kalibata",
+                                //         style: TextStyle(
+                                //           color: Colors.black,
+                                //           fontSize: 14,
+                                //         ),
+                                //       ),
+                                //     ],
+                                //   ),
+                                // ),
                               ],
                             ),
                           ),
@@ -225,31 +260,31 @@ class _CheckoutScreen extends State<CheckoutScreen> with WidgetsBindingObserver 
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Image.asset(
-                                  'images/img2.png',
-                                  width: 100,
-                                ),
+                                // Image.asset(
+                                //   'images/img2.png',
+                                //   width: 100,
+                                // ),
                                 SizedBox(width: 20),
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        "Langit Biru",
+                                        data?.nama_produk ?? 'No Title',
                                         style: TextStyle(
                                           fontSize: 18,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
                                       Text(
-                                        "Jumlah : 1",
+                                        "Jumlah : ${data?.jumlah}",
                                         style: TextStyle(
                                           color: Colors.black,
                                           fontSize: 14,
                                         ),
                                       ),
                                       Text(
-                                        "Rp. 87.000",
+                                        'Rp. ${data?.harga.toStringAsFixed(2)}',
                                         style: TextStyle(
                                           color: Colors.black,
                                           fontSize: 14,
@@ -257,7 +292,7 @@ class _CheckoutScreen extends State<CheckoutScreen> with WidgetsBindingObserver 
                                       ),
                                       SizedBox(height: 20), // Menambahkan spasi antara teks dan tombol
                                       Text(
-                                        "Total Pesanan : Rp. 87.000",
+                                        "Total Pesanan : ${data?.subtotal.toStringAsFixed(2)}",
                                         style: TextStyle(
                                           fontSize: 18,
                                           fontWeight: FontWeight.bold,
@@ -355,7 +390,7 @@ class _CheckoutScreen extends State<CheckoutScreen> with WidgetsBindingObserver 
                                           ),
                                           Spacer(),
                                           Text(
-                                            "Rp. 87.000",
+                                            'Rp. ${data?.harga.toStringAsFixed(2)}',
                                             style: TextStyle(
                                               fontSize: 14,
                                               color: Colors.black,
@@ -395,7 +430,7 @@ class _CheckoutScreen extends State<CheckoutScreen> with WidgetsBindingObserver 
                                           ),
                                           Spacer(),
                                           Text(
-                                            "Rp. 87.000",
+                                            'Rp. ${data?.subtotal.toStringAsFixed(2)}',
                                             style: TextStyle(
                                               fontSize: 14,
                                               color: Colors.black,
@@ -418,7 +453,7 @@ class _CheckoutScreen extends State<CheckoutScreen> with WidgetsBindingObserver 
                                 onPressed: () {
                                   Navigator.push(
                                     context,
-                                    MaterialPageRoute(builder: (context) => AlamatPengiriman()),
+                                    MaterialPageRoute(builder: (context) => OrderScreen()),
                                   );
                                 },
                                 child: Text("Order",
@@ -451,31 +486,6 @@ class _CheckoutScreen extends State<CheckoutScreen> with WidgetsBindingObserver 
             ),
           ],
         ),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.shopping_cart),
-            label: 'Keranjang',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.bookmarks_outlined),
-            label: 'Pesanan',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-        ],
-        currentIndex: _selectedIndex,
-        selectedItemColor: Colors.blue,
-        unselectedItemColor: Colors.blue,
-        backgroundColor: Color(0xFF87CEEB),
-        onTap: _onItemTapped,
       ),
     );
   }
