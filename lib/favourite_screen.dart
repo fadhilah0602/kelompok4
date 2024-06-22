@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:project_ecommerce/detail_product.dart';
+import 'package:project_ecommerce/model/model_favourite.dart';
 import 'package:project_ecommerce/profile.dart';
 import 'package:project_ecommerce/utils/session_manager.dart';
 import 'cart_screen.dart';
@@ -8,7 +11,9 @@ import 'edit_profile.dart';
 import 'home_page.dart';
 import 'login.dart';
 import 'model/model_user.dart';
+import 'navigation_page.dart';
 import 'order_screen.dart';
+import 'package:http/http.dart' as http;
 
 class FavouriteScreen extends StatefulWidget {
   const FavouriteScreen({super.key});
@@ -19,46 +24,43 @@ class FavouriteScreen extends StatefulWidget {
 
 class _FavouriteScreen extends State<FavouriteScreen> with WidgetsBindingObserver {
   late ModelUsers currentUser; // Nullable currentUser
-  int _selectedIndex = 0;
-  // late List<> _sejarawanList;
-  // late List<Datum> _filteredSejarawanList;
-  late bool _isLoading;
+  late Favourite favourite;
+
+  int _selectedIndex = 1;
+  List<Favourite> _favouriteList = [];
+  List<Favourite> _filteredFavouriteList = [];
+  bool _isLoading = true;
+  TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this); // Add the observer
     getDataSession();// Load session data when the widget initializes
-    _isLoading = true;
-    // _fetchSejarawan();
-    // _filteredSejarawanList = [];
+    _fetchFavourite();
   }
 
-  // Future<void> _fetchSejarawan() async {
-  //   final response = await http
-  //       .get(Uri.parse('http://192.168.1.12/kebudayaan/sejarawan.php'));
-  //   if (response.statusCode == 200) {
-  //     final parsed = jsonDecode(response.body);
-  //     setState(() {
-  //       _sejarawanList =
-  //       List<Datum>.from(parsed['data'].map((x) => Datum.fromJson(x)));
-  //       _filteredSejarawanList = _sejarawanList;
-  //       _isLoading = false;
-  //     });
-  //   } else {
-  //     throw Exception('Failed to load pegawai');
-  //   }
-  // }
-  //
-  // void _filterSejarawanList(String query) {
-  //   setState(() {
-  //     _filteredSejarawanList = _sejarawanList
-  //         .where((sejarawan) =>
-  //     sejarawan.nama.toLowerCase().contains(query.toLowerCase()) ||
-  //         sejarawan.asal.toLowerCase().contains(query.toLowerCase()))
-  //         .toList();
-  //   });
-  // }
+  Future<void> _fetchFavourite() async {
+    try {
+      final response = await http.get(Uri.parse('http://192.168.1.12/kelompok4/favourite.php?id_user=${sessionManager.id_user}'));
+      if (response.statusCode == 200) {
+        final parsed = jsonDecode(response.body);
+        setState(() {
+          _favouriteList = List<Favourite>.from(parsed['data'].map((x) => Favourite.fromJson(x)));
+          _filteredFavouriteList = _favouriteList;
+          _isLoading = false;
+        });
+      } else {
+        throw Exception('Failed to load keranjang');
+      }
+    } catch (e) {
+      print('Error fetching products: $e');
+      setState(() {
+        _isLoading = false;
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -77,20 +79,62 @@ class _FavouriteScreen extends State<FavouriteScreen> with WidgetsBindingObserve
     bool hasSession = await sessionManager.getSession();
     if (hasSession) {
       setState(() {
-        // currentUser = ModelUsers(
-        //   id_user: sessionManager.id_user!,
-        //   username: sessionManager.username!,
-        //   email: sessionManager.email!,
-        //   no_hp: sessionManager.no_hp!,
-        //   fullname: sessionManager.fullname!,
-        //   alamat: sessionManager.alamat!,
-        //   role: sessionManager.role!,
-        //   jenis_kelamin: sessionManager.jenis_kelamin!,
-        // );
+        currentUser = ModelUsers(
+          id_user: sessionManager.id_user!,
+          username: sessionManager.username!,
+          email: sessionManager.email!,
+          no_hp: sessionManager.no_hp!,
+          fullname: sessionManager.fullname!,
+          alamat: sessionManager.alamat!,
+          role: sessionManager.role!,
+          jenis_kelamin: sessionManager.jenis_kelamin!,
+        );
       });
     } else {
       print('Log Session tidak ditemukan!');
     }
+  }
+
+  Future<void> _deleteFavourite(String idFavourite) async {
+    final String apiUrl = 'http://192.168.1.12/kelompok4//deleteFavourite.php';
+
+    final response = await http.post(
+      Uri.parse(apiUrl),
+      body: {"id_favourite": idFavourite},
+    );
+
+    if (response.statusCode == 200) {
+      final responseData = jsonDecode(response.body);
+      if (responseData['isSuccess']) {
+        setState(() {
+          _fetchFavourite();
+          // _keranjangList.removeAt(idKeranjang.toString() as int);
+          // _filteredKeranjangList = List.from(_keranjangList);
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(responseData['message'])),
+        );
+      } else {
+        throw Exception(responseData['message']);
+      }
+    } else {
+      throw Exception('Failed to delete data');
+    }
+  }
+
+  // void _deleteFavourite(Favourite favourite) {
+  //   setState(() {
+  //     _filteredFavouriteList.remove(favourite);
+  //     _favouriteList.remove(favourite);
+  //   });
+  //   // Jika Anda memiliki operasi tambahan seperti menghapus dari database, tambahkan di sini
+  // }
+
+
+  void _filterFavouriteList(String query) {
+    setState(() {
+      _filteredFavouriteList = _favouriteList.where((favourite) => favourite.nama_produk.toLowerCase().contains(query.toLowerCase())).toList();
+    });
   }
 
   void _onItemTapped(int index) {
@@ -101,7 +145,7 @@ class _FavouriteScreen extends State<FavouriteScreen> with WidgetsBindingObserve
       case 0:
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => HomePage()),
+          MaterialPageRoute(builder: (context) => NavigationPage()),
         );
         break;
       case 1:
@@ -160,125 +204,233 @@ class _FavouriteScreen extends State<FavouriteScreen> with WidgetsBindingObserve
         title: Text('My Favourite'),
       ),
       backgroundColor: Color(0xFF87CEEB),
-      body: SingleChildScrollView(
-        child: Stack(
+      body: _isLoading
+          ? Center(child: CircularProgressIndicator())
+          : Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
           children: [
-            // Image.asset(
-            //   'images/img2.png',
-            //   fit: BoxFit.cover,
-            //   height: MediaQuery.of(context).size.height,
-            //   width: MediaQuery.of(context).size.width,
-            // ),
+            SizedBox(height: 20),
             Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                children: [
-                  // SizedBox(
-                  //   height: 20,
-                  // ),
-                  // Padding(
-                  //   padding: const EdgeInsets.all(8.0),
-                  //   child: TextField(
-                  //     // controller: _searchController,
-                  //     // onChanged: _filterSejarawanList,
-                  //     decoration: InputDecoration(
-                  //       labelText: 'Search Cart',
-                  //       prefixIcon: Icon(Icons.search),
-                  //       border: OutlineInputBorder(),
-                  //     ),
-                  //   ),
-                  // ),
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
+              padding: const EdgeInsets.all(8.0),
+              child: TextField(
+                controller: _searchController,
+                onChanged: _filterFavouriteList,
+                decoration: InputDecoration(
+                  labelText: 'Search Cart',
+                  prefixIcon: Icon(Icons.search),
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            Expanded(
+              child: ListView.builder(
+                itemCount: _filteredFavouriteList.length,
+                itemBuilder: (context, index) {
+                  final favourite = _filteredFavouriteList[index];
+                  return Card(
+                    elevation: 4,
+                    margin: EdgeInsets.all(8.0),
+                    child: Padding(
+                      padding: EdgeInsets.all(16.0),
                       child: Column(
-                        mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Padding(
-                            padding: const EdgeInsets.all(12.0),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Image.asset(
-                                  'images/img2.png',
-                                  width: 100,
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                favourite.nama_produk,
+                                style: TextStyle(fontSize: 16),
+                              ),
+                              IconButton(
+                                icon: Icon(
+                                  Icons.favorite,
+                                  size: 20,
+                                  color: Colors.red,
                                 ),
-                                SizedBox(width: 20),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        "Langit Biru",
-                                        style: TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      Text(
-                                        "Jumlah : 1",
-                                        style: TextStyle(
-                                          color: Colors.black,
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                      Text(
-                                        "Rp. 87.000",
-                                        style: TextStyle(
-                                          color: Colors.black,
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                      SizedBox(height: 10), // Menambahkan spasi antara teks dan tombol
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.end,
-                                        children: [
-                                          // GestureDetector(
-                                          //   onTap: () {
-                                          //     Navigator.push(
-                                          //       context,
-                                          //       MaterialPageRoute(builder: (context) => CheckoutScreen()),
-                                          //     );
-                                          //   },
-                                          //   child: Icon(
-                                          //     Icons.edit,
-                                          //     size: 20,
-                                          //     color: Colors.blue,
-                                          //   ),
-                                          // ),
-                                          // SizedBox(width: 10),
-                                          GestureDetector(
-                                            onTap: () {
-                                              // Implementasi fungsi untuk tombol hapus
-                                            },
-                                            child: Icon(
-                                              Icons.delete,
-                                              color: Colors.red,
-                                              size: 20,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
+                                onPressed: () => _deleteFavourite(favourite.id_favourite.toString()),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Harga:',
+                                style: TextStyle(fontSize: 16),
+                              ),
+                              Text(
+                                'Rp. ${favourite.harga.toStringAsFixed(2)}',
+                                style: TextStyle(fontSize: 16),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Stok:',
+                                style: TextStyle(fontSize: 16),
+                              ),
+                              Text(
+                                '${favourite.stok}',
+                                style: TextStyle(fontSize: 16),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Harga:',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
                                 ),
-                              ],
-                            ),
+                              ),
+                              Text(
+                                'Rp. ${favourite.harga.toStringAsFixed(2)}',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
                     ),
-                  ),
-                ],
+                  );
+                },
               ),
             ),
           ],
         ),
       ),
+
+      // body: SingleChildScrollView(
+      //   child: Stack(
+      //     children: [
+      //       // Image.asset(
+      //       //   'images/img2.png',
+      //       //   fit: BoxFit.cover,
+      //       //   height: MediaQuery.of(context).size.height,
+      //       //   width: MediaQuery.of(context).size.width,
+      //       // ),
+      //       Padding(
+      //         padding: const EdgeInsets.all(20.0),
+      //         child: Column(
+      //           children: [
+      //             // SizedBox(
+      //             //   height: 20,
+      //             // ),
+      //             // Padding(
+      //             //   padding: const EdgeInsets.all(8.0),
+      //             //   child: TextField(
+      //             //     // controller: _searchController,
+      //             //     // onChanged: _filterSejarawanList,
+      //             //     decoration: InputDecoration(
+      //             //       labelText: 'Search Cart',
+      //             //       prefixIcon: Icon(Icons.search),
+      //             //       border: OutlineInputBorder(),
+      //             //     ),
+      //             //   ),
+      //             // ),
+      //             Padding(
+      //               padding: const EdgeInsets.only(bottom: 10),
+      //               child: Container(
+      //                 decoration: BoxDecoration(
+      //                   color: Colors.white,
+      //                   borderRadius: BorderRadius.circular(20),
+      //                 ),
+      //                 child: Column(
+      //                   mainAxisAlignment: MainAxisAlignment.start,
+      //                   children: [
+      //                     Padding(
+      //                       padding: const EdgeInsets.all(12.0),
+      //                       child: Row(
+      //                         crossAxisAlignment: CrossAxisAlignment.start,
+      //                         children: [
+      //                           Image.asset(
+      //                             'images/img2.png',
+      //                             width: 100,
+      //                           ),
+      //                           SizedBox(width: 20),
+      //                           Expanded(
+      //                             child: Column(
+      //                               crossAxisAlignment: CrossAxisAlignment.start,
+      //                               children: [
+      //                                 Text(
+      //                                   "Langit Biru",
+      //                                   style: TextStyle(
+      //                                     fontSize: 18,
+      //                                     fontWeight: FontWeight.bold,
+      //                                   ),
+      //                                 ),
+      //                                 Text(
+      //                                   "Jumlah : 1",
+      //                                   style: TextStyle(
+      //                                     color: Colors.black,
+      //                                     fontSize: 14,
+      //                                   ),
+      //                                 ),
+      //                                 Text(
+      //                                   "Rp. 87.000",
+      //                                   style: TextStyle(
+      //                                     color: Colors.black,
+      //                                     fontSize: 14,
+      //                                   ),
+      //                                 ),
+      //                                 SizedBox(height: 10), // Menambahkan spasi antara teks dan tombol
+      //                                 Row(
+      //                                   mainAxisAlignment: MainAxisAlignment.end,
+      //                                   children: [
+      //                                     // GestureDetector(
+      //                                     //   onTap: () {
+      //                                     //     Navigator.push(
+      //                                     //       context,
+      //                                     //       MaterialPageRoute(builder: (context) => CheckoutScreen()),
+      //                                     //     );
+      //                                     //   },
+      //                                     //   child: Icon(
+      //                                     //     Icons.edit,
+      //                                     //     size: 20,
+      //                                     //     color: Colors.blue,
+      //                                     //   ),
+      //                                     // ),
+      //                                     // SizedBox(width: 10),
+      //                                     GestureDetector(
+      //                                       onTap: () {
+      //                                         // Implementasi fungsi untuk tombol hapus
+      //                                       },
+      //                                       child: Icon(
+      //                                         Icons.delete,
+      //                                         color: Colors.red,
+      //                                         size: 20,
+      //                                       ),
+      //                                     ),
+      //                                   ],
+      //                                 ),
+      //                               ],
+      //                             ),
+      //                           ),
+      //                         ],
+      //                       ),
+      //                     ),
+      //                   ],
+      //                 ),
+      //               ),
+      //             ),
+      //           ],
+      //         ),
+      //       ),
+      //     ],
+      //   ),
+      // ),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(

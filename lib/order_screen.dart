@@ -15,6 +15,8 @@ import 'model/model_order.dart';
 import 'model/model_user.dart';
 import 'package:http/http.dart' as http;
 
+import 'navigation_page.dart';
+
 class OrderScreen extends StatefulWidget {
   const OrderScreen({super.key});
 
@@ -25,28 +27,30 @@ class OrderScreen extends StatefulWidget {
 class _OrderScreen extends State<OrderScreen> with WidgetsBindingObserver {
   late ModelUsers currentUser;
   late Order pesanan;
-  late AlamatPengiriman alamatPengiriman;
+  // late AlamatPengiriman alamatPengiriman;
   int _selectedIndex = 0;
   List<Order> _pesananList = [];
-  late bool _Loading;
+  List<Order> _filteredPesananList = [];
+  // late bool _Loading;
   bool _isLoading = true;
+  TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     getDataSession();
-    _isLoading = true;
-    _fetchKeranjang();
+    _fetchPesanan();
   }
 
-  Future<void> _fetchKeranjang() async {
+  Future<void> _fetchPesanan() async {
     try {
       final response = await http.get(Uri.parse('http://192.168.1.12/kelompok4/order.php?id_user=${sessionManager.id_user}'));
       if (response.statusCode == 200) {
         final parsed = jsonDecode(response.body);
         setState(() {
           _pesananList = List<Order>.from(parsed['data'].map((x) => Order.fromJson(x)));
+          _filteredPesananList = _pesananList;
           _isLoading = false;
         });
       } else {
@@ -74,20 +78,26 @@ class _OrderScreen extends State<OrderScreen> with WidgetsBindingObserver {
     }
   }
 
+  void _filterPesananList(String query) {
+    setState(() {
+      _filteredPesananList = _pesananList.where((pesanan) => pesanan.nama.toLowerCase().contains(query.toLowerCase())).toList();
+    });
+  }
+
   Future<void> getDataSession() async {
     bool hasSession = await sessionManager.getSession();
     if (hasSession) {
       setState(() {
-        // currentUser = ModelUsers(
-        //   id_user: sessionManager.id_user!,
-        //   username: sessionManager.username!,
-        //   email: sessionManager.email!,
-        //   no_hp: sessionManager.no_hp!,
-        //   fullname: sessionManager.fullname!,
-        //   alamat: sessionManager.alamat!,
-        //   role: sessionManager.role!,
-        //   jenis_kelamin: sessionManager.jenis_kelamin!,
-        // );
+        currentUser = ModelUsers(
+          id_user: sessionManager.id_user!,
+          username: sessionManager.username!,
+          email: sessionManager.email!,
+          no_hp: sessionManager.no_hp!,
+          fullname: sessionManager.fullname!,
+          alamat: sessionManager.alamat!,
+          role: sessionManager.role!,
+          jenis_kelamin: sessionManager.jenis_kelamin!,
+        );
       });
     } else {
       print('Log Session tidak ditemukan!');
@@ -102,7 +112,7 @@ class _OrderScreen extends State<OrderScreen> with WidgetsBindingObserver {
       case 0:
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => HomePage()),
+          MaterialPageRoute(builder: (context) => NavigationPage()),
         );
         break;
       case 1:
@@ -149,99 +159,164 @@ class _OrderScreen extends State<OrderScreen> with WidgetsBindingObserver {
         child: Column(
           children: [
             SizedBox(height: 20),
-            // Padding(
-            //   padding: const EdgeInsets.all(20.0),
-            //   child: Column(
-            //     children: [
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: InkWell(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => DetailOrder()),
-                        );
-                      },
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: TextField(
+                controller: _searchController,
+                onChanged: _filterPesananList,
+                decoration: InputDecoration(
+                  labelText: 'Search Pesanan',
+                  prefixIcon: Icon(Icons.search),
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            Expanded(
+              child: ListView.builder(
+                itemCount: _filteredPesananList.length,
+                itemBuilder: (context, index) {
+                  final pesanan = _filteredPesananList[index];
+                  return InkWell(
+                    onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => DetailOrder(data: pesanan)),
+                            );
+                      print('Card tapped: ${pesanan.namaProduk}');
+                    },
+                    child: Card(
+                      elevation: 4,
+                      margin: EdgeInsets.all(8.0),
+                      child: Padding(
+                        padding: EdgeInsets.all(16.0),
                         child: Column(
-                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Padding(
-                              padding: const EdgeInsets.all(12.0),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  // Image.asset(
-                                  //   'images/img2.png',
-                                  //   width: 100,
-                                  // ),
-                                  SizedBox(width: 20),
-                                  Expanded(
-                                    child: ListView.builder(
-                                        itemCount: _pesananList.length,
-                                        itemBuilder: (context, index) {
-                                          final keranjang = _pesananList[index];
-                                          return Card(
-                                            elevation: 4,
-                                            margin: EdgeInsets.all(8.0),
-                                            child: Padding(
-                                              padding: EdgeInsets.all(16.0),
-                                              child: Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    pesanan.nama_produk ?? 'No Title',
-                                                    // "Langit Biru",
-                                                    style: TextStyle(
-                                                      fontSize: 18,
-                                                      fontWeight: FontWeight.bold,
-                                                    ),
-                                                  ),
-                                                  Text(
-                                                    "Jumlah : ${pesanan.jumlah}",
-                                                    style: TextStyle(
-                                                      color: Colors.black,
-                                                      fontSize: 14,
-                                                    ),
-                                                  ),
-                                                  Text(
-                                                    "Rp. ${pesanan.harga.toStringAsFixed(2)}",
-                                                    style: TextStyle(
-                                                      color: Colors.black,
-                                                      fontSize: 14,
-                                                    ),
-                                                  ),
-                                                  SizedBox(height: 20),
-                                                  Text(
-                                                    "Total Pesanan : ${pesanan.total_bayar.toStringAsFixed(2)}",
-                                                    style: TextStyle(
-                                                      fontSize: 18,
-                                                      fontWeight: FontWeight.bold,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          );
-                                        }),
-
-
-                                  ),
-                                ],
+                            Text(
+                              pesanan.namaProduk,
+                              // "Langit Biru",
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              "Jumlah : ${pesanan.jumlah}",
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 14,
+                              ),
+                            ),
+                            Text(
+                              "Rp. ${pesanan.harga}",
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 14,
+                              ),
+                            ),
+                            SizedBox(height: 20),
+                            Text(
+                              "Total Pesanan : ${pesanan.totalBayar}",
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
                           ],
                         ),
                       ),
                     ),
-                  ),
-          //       ],
-          //     ),
-          //   ),
+                  );
+                },
+              ),
+            )
+
+            // Padding(
+                  //   padding: const EdgeInsets.only(bottom: 10),
+                  //   child: InkWell(
+                  //     onTap: () {
+                  //       Navigator.push(
+                  //         context,
+                  //         MaterialPageRoute(builder: (context) => DetailOrder()),
+                  //       );
+                  //     },
+                  //     child: Container(
+                  //       decoration: BoxDecoration(
+                  //         color: Colors.white,
+                  //         borderRadius: BorderRadius.circular(20),
+                  //       ),
+                  //       child: Column(
+                  //         mainAxisAlignment: MainAxisAlignment.start,
+                  //         children: [
+                  //           Padding(
+                  //             padding: const EdgeInsets.all(12.0),
+                  //             child: Row(
+                  //               crossAxisAlignment: CrossAxisAlignment.start,
+                  //               children: [
+                  //                 // Image.asset(
+                  //                 //   'images/img2.png',
+                  //                 //   width: 100,
+                  //                 // ),
+                  //                 SizedBox(width: 20),
+                  //                 Expanded(
+                  //                   child: ListView.builder(
+                  //                       itemCount: _pesananList.length,
+                  //                       itemBuilder: (context, index) {
+                  //                         final keranjang = _pesananList[index];
+                  //                         return Card(
+                  //                           elevation: 4,
+                  //                           margin: EdgeInsets.all(8.0),
+                  //                           child: Padding(
+                  //                             padding: EdgeInsets.all(16.0),
+                  //                             child: Column(
+                  //                               crossAxisAlignment: CrossAxisAlignment.start,
+                  //                               children: [
+                  //                                 Text(
+                  //                                   pesanan.nama_produk ?? 'No Title',
+                  //                                   // "Langit Biru",
+                  //                                   style: TextStyle(
+                  //                                     fontSize: 18,
+                  //                                     fontWeight: FontWeight.bold,
+                  //                                   ),
+                  //                                 ),
+                  //                                 Text(
+                  //                                   "Jumlah : ${pesanan.jumlah}",
+                  //                                   style: TextStyle(
+                  //                                     color: Colors.black,
+                  //                                     fontSize: 14,
+                  //                                   ),
+                  //                                 ),
+                  //                                 Text(
+                  //                                   "Rp. ${pesanan.harga.toStringAsFixed(2)}",
+                  //                                   style: TextStyle(
+                  //                                     color: Colors.black,
+                  //                                     fontSize: 14,
+                  //                                   ),
+                  //                                 ),
+                  //                                 SizedBox(height: 20),
+                  //                                 Text(
+                  //                                   "Total Pesanan : ${pesanan.total_bayar.toStringAsFixed(2)}",
+                  //                                   style: TextStyle(
+                  //                                     fontSize: 18,
+                  //                                     fontWeight: FontWeight.bold,
+                  //                                   ),
+                  //                                 ),
+                  //                               ],
+                  //                             ),
+                  //                           ),
+                  //                         );
+                  //                       }),
+                  //
+                  //
+                  //                 ),
+                  //               ],
+                  //             ),
+                  //           ),
+                  //         ],
+                  //       ),
+                  //     ),
+                  //   ),
+                  // ),
           ],
         ),
       ),

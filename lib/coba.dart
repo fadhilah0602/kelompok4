@@ -612,14 +612,19 @@
 // }
 
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:project_ecommerce/detail_product.dart';
 import 'package:project_ecommerce/model/model_kategori.dart';
 import 'package:project_ecommerce/profile.dart';
+import 'package:project_ecommerce/setting.dart';
 import 'package:project_ecommerce/utils/session_manager.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
+import 'package:project_ecommerce/legal_policies.dart';
+import 'package:project_ecommerce/setting.dart';
+
 
 import 'cart_screen.dart';
 import 'favourite_screen.dart';
@@ -726,7 +731,7 @@ class _PageMulaiState extends State<PageMulai> with TickerProviderStateMixin {
     setState(() {
       if (index == 0) {
         _selectedCategoryIndex =
-            -1; // Mengatur indeks kategori menjadi -1 untuk "All"
+        -1; // Mengatur indeks kategori menjadi -1 untuk "All"
       } else {
         _selectedCategoryIndex =
             index - 1; // Mengurangi 1 untuk kategori aktual
@@ -818,6 +823,24 @@ class _PageMulaiState extends State<PageMulai> with TickerProviderStateMixin {
     return category.kategori != 'Unknown' ? category.kategori : null;
   }
 
+  Future<void> addFavourite(int id_produk) async {
+    final url = 'http://192.168.1.12/kelompok4/addFavourite.php';
+    final response = await http.post(
+      Uri.parse(url),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'id_produk': id_produk,
+        'id_user': sessionManager.id_user,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      print('Item added to favourites successfully');
+    } else {
+      throw Exception('Failed to add item to favourites');
+    }
+  }
+
   // Future<void> _toggleFavorite() async {
   //   SharedPreferences prefs = await SharedPreferences.getInstance();
   //   List<String> favoriteProductIds =
@@ -832,7 +855,7 @@ class _PageMulaiState extends State<PageMulai> with TickerProviderStateMixin {
   //     _isFavorite = !_isFavorite;
   //   });
   // }
-
+  //
   // Future<void> _checkIfFavorite() async {
   //   SharedPreferences prefs = await SharedPreferences.getInstance();
   //   List<String> favoriteProductIds =
@@ -905,69 +928,41 @@ class _PageMulaiState extends State<PageMulai> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        automaticallyImplyLeading: false,
-        // toolbarHeight: 20,
-        // backgroundColor: Color(0xFFE6E6E6),
-        backgroundColor: Color(0xFF00BFFF),
-        title: Column(
+        backgroundColor: Color(0xFF00BFFF), // Sesuaikan dengan warna tema aplikasi Anda
+        automaticallyImplyLeading: false, // Untuk menghilangkan tombol back secara otomatis
+        title: Row(
           children: [
-            // Padding(
-            //   padding: EdgeInsets.only(top: 40, left: 50),
-            //   child: Expanded(
-            //     child: Column(
-            //       crossAxisAlignment: CrossAxisAlignment.start,
-            //       children: [
-            //         Text(
-            //           'Welcome, ${currentUser!.fullname}',
-            //           style: TextStyle(
-            //             color: Colors.white,
-            //           ),
-            //         ),
-            //         Text(
-            //           "Find Your Book",
-            //           style: TextStyle(
-            //             fontWeight: FontWeight.bold,
-            //             color: Colors.white,
-            //             fontSize: 20,
-            //           ),
-            //         ),
-            //       ],
-            //     ),
-            //   ),
-            // ),
+            Padding(
+              padding: const EdgeInsets.only(left: 16.0),
+              child: Text(
+                'Welcome, ${currentUser.fullname}',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                ),
+              ),
+            ),
           ],
         ),
         actions: [
-          // IconButton(
-          //   onPressed: () {
-          //     Navigator.push(
-          //       context,
-          //       MaterialPageRoute(
-          //         builder: (context) => PageListCart(),
-          //       ),
-          //     );
-          //   },
-          //   icon: Container(
-          //     child: Icon(
-          //       Icons.shopping_cart,
-          //       color: Color(0xFF424252),
-          //     ),
-          //   ),
-          // ),
-          Text(
-            'Welcome, ${currentUser!.fullname}',
-            style: TextStyle(
-              color: Colors.white,
-            ),
+          IconButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => SettingPage()),
+              );
+            },
+            icon: Icon(Icons.settings),
           ),
           IconButton(
-              onPressed: () {
-                Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => LoginScreen()));
-              },
-              icon: Icon(Icons.logout)),
+            onPressed: () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => LoginScreen()),
+              );
+            },
+            icon: Icon(Icons.logout),
+          ),
         ],
       ),
       backgroundColor: Color(0xFFADD8E6),
@@ -1329,8 +1324,12 @@ class _PageMulaiState extends State<PageMulai> with TickerProviderStateMixin {
                                     ),
                                   ),
                                   SizedBox(height: 20,),
+
                                   InkWell(
                                     onTap: () {
+                                      if(_isFavorite){
+                                        addFavourite(int.parse(product.id_produk));
+                                      }
                                       setState(() {
                                         _isFavorite = !_isFavorite;
                                       });
@@ -1348,7 +1347,6 @@ class _PageMulaiState extends State<PageMulai> with TickerProviderStateMixin {
                                         ),
                                       ],
                                     ),
-
                                   ),
                                 ],
                               ),

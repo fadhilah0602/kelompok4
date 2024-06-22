@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:project_ecommerce/alamat_pengiriman.dart';
@@ -8,150 +10,151 @@ import 'cart_screen.dart';
 import 'edit_profile.dart';
 import 'home_page.dart';
 import 'login.dart';
+import 'model/model_order.dart';
 import 'model/model_user.dart';
 import 'order_screen.dart';
+import 'package:http/http.dart' as http;
 
-class DetailOrder extends StatefulWidget {
-  const DetailOrder({super.key});
+class DetailOrder extends StatelessWidget {
+  final Order? data;
 
-  @override
-  State<DetailOrder> createState() => _DetailOrder();
-}
+  const DetailOrder({Key? key, this.data}) : super(key: key);
+  // const DetailOrder({super.key});
 
-class _DetailOrder extends State<DetailOrder> with WidgetsBindingObserver {
-  late ModelUsers currentUser; // Nullable currentUser
-  int _selectedIndex = 0;
-  // late List<Datum> _sejarawanList;
-  // late List<Datum> _filteredSejarawanList;
-  late bool _isLoading;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this); // Add the observer
-    getDataSession();// Load session data when the widget initializes
-    _isLoading = true;
-    // _fetchSejarawan();
-    // _filteredSejarawanList = [];
-  }
-
-  // Future<void> _fetchSejarawan() async {
-  //   final response = await http
-  //       .get(Uri.parse('http://192.168.1.12/kebudayaan/sejarawan.php'));
-  //   if (response.statusCode == 200) {
-  //     final parsed = jsonDecode(response.body);
-  //     setState(() {
-  //       _sejarawanList =
-  //       List<Datum>.from(parsed['data'].map((x) => Datum.fromJson(x)));
-  //       _filteredSejarawanList = _sejarawanList;
-  //       _isLoading = false;
-  //     });
-  //   } else {
-  //     throw Exception('Failed to load pegawai');
-  //   }
-  // }
-  //
-  // void _filterSejarawanList(String query) {
-  //   setState(() {
-  //     _filteredSejarawanList = _sejarawanList
-  //         .where((sejarawan) =>
-  //     sejarawan.nama.toLowerCase().contains(query.toLowerCase()) ||
-  //         sejarawan.asal.toLowerCase().contains(query.toLowerCase()))
-  //         .toList();
-  //   });
-  // }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this); // Remove the observer
-    super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      getDataSession();
-    }
-  }
-
-  Future<void> getDataSession() async {
-    bool hasSession = await sessionManager.getSession();
-    if (hasSession) {
-      setState(() {
-        // currentUser = ModelUsers(
-        //   id_user: sessionManager.id_user!,
-        //   username: sessionManager.username!,
-        //   email: sessionManager.email!,
-        //   no_hp: sessionManager.no_hp!,
-        //   fullname: sessionManager.fullname!,
-        //   alamat: sessionManager.alamat!,
-        //   role: sessionManager.role!,
-        //   jenis_kelamin: sessionManager.jenis_kelamin!,
-        // );
-      });
-    } else {
-      print('Log Session tidak ditemukan!');
-    }
-  }
-
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-    switch (index) {
-      case 0:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => HomePage()),
-        );
-        break;
-      case 1:
-      // Navigasi ke halaman Keranjang
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => CartScreen()),
-        );
-        break;
-      case 2:
-      // Navigasi ke halaman Pesanan
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => OrderScreen()),
-        );
-        break;
-      case 3:
-
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => ProfilePage(currentUser: currentUser)),
-        );
-        break;
-        // // Tambahkan logika logout
-        //   setState(() {
-        //     sessionManager.clearSession();
-        //     Navigator.pushAndRemoveUntil(
-        //       context,
-        //       MaterialPageRoute(
-        //           builder: (context) =>
-        //               LoginScreen()),
-        //           (route) => false,
-        //     );
-        //   });
-        break;
-      default:
-    }
-  }
-
-  Future<void> _refreshData() async {
-    // Simulate a long-running operation
-    await Future.delayed(Duration(seconds: 2));
-
-    // Fetch new data or update existing data
-    // For example, you can fetch data from an API
-    setState(() {
-      getDataSession();
-    });
-  }
+//   @override
+//   State<DetailOrder> createState() => _DetailOrder();
+// }
+//
+// class _DetailOrder extends State<DetailOrder> with WidgetsBindingObserver {
+//   late ModelUsers currentUser; // Nullable currentUser
+//   int _selectedIndex = 0;
+//   List<Order> _pesananList = [];
+//   List<Order> _filteredPesananList = [];
+//   bool _isLoading = true;
+//
+//   @override
+//   void initState() {
+//     super.initState();
+//     WidgetsBinding.instance.addObserver(this); // Add the observer
+//     getDataSession();// Load session data when the widget initializes
+//     _fetchPesanan();
+//   }
+//
+//   Future<void> _fetchPesanan() async {
+//     try {
+//       final response = await http.get(Uri.parse('http://192.168.1.12/kelompok4/order.php?id_user=${sessionManager.id_user}'));
+//       if (response.statusCode == 200) {
+//         final parsed = jsonDecode(response.body);
+//         setState(() {
+//           _pesananList = List<Order>.from(parsed['data'].map((x) => Order.fromJson(x)));
+//           _filteredPesananList = _pesananList;
+//           _isLoading = false;
+//         });
+//       } else {
+//         throw Exception('Failed to load keranjang');
+//       }
+//     } catch (e) {
+//       print('Error fetching products: $e');
+//       setState(() {
+//         _isLoading = false;
+//         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+//       });
+//     }
+//   }
+//
+//   @override
+//   void dispose() {
+//     WidgetsBinding.instance.removeObserver(this); // Remove the observer
+//     super.dispose();
+//   }
+//
+//   @override
+//   void didChangeAppLifecycleState(AppLifecycleState state) {
+//     if (state == AppLifecycleState.resumed) {
+//       getDataSession();
+//     }
+//   }
+//
+//   void _filterPesananList(String query) {
+//     setState(() {
+//       _filteredPesananList = _pesananList.where((pesanan) => pesanan.namaProduk.toLowerCase().contains(query.toLowerCase())).toList();
+//     });
+//   }
+//
+//   Future<void> getDataSession() async {
+//     bool hasSession = await sessionManager.getSession();
+//     if (hasSession) {
+//       setState(() {
+//         currentUser = ModelUsers(
+//           id_user: sessionManager.id_user!,
+//           username: sessionManager.username!,
+//           email: sessionManager.email!,
+//           no_hp: sessionManager.no_hp!,
+//           fullname: sessionManager.fullname!,
+//           alamat: sessionManager.alamat!,
+//           role: sessionManager.role!,
+//           jenis_kelamin: sessionManager.jenis_kelamin!,
+//         );
+//       });
+//     } else {
+//       print('Log Session tidak ditemukan!');
+//     }
+//   }
+//
+//   void _onItemTapped(int index) {
+//     setState(() {
+//       _selectedIndex = index;
+//     });
+//     switch (index) {
+//       case 0:
+//         Navigator.push(
+//           context,
+//           MaterialPageRoute(builder: (context) => HomePage()),
+//         );
+//         break;
+//       case 1:
+//       // Navigasi ke halaman Keranjang
+//         Navigator.push(
+//           context,
+//           MaterialPageRoute(builder: (context) => CartScreen()),
+//         );
+//         break;
+//       case 2:
+//       // Navigasi ke halaman Pesanan
+//         Navigator.push(
+//           context,
+//           MaterialPageRoute(builder: (context) => OrderScreen()),
+//         );
+//         break;
+//       case 3:
+//
+//         Navigator.push(
+//           context,
+//           MaterialPageRoute(builder: (context) => ProfilePage(currentUser: currentUser)),
+//         );
+//         break;
+//         // // Tambahkan logika logout
+//         //   setState(() {
+//         //     sessionManager.clearSession();
+//         //     Navigator.pushAndRemoveUntil(
+//         //       context,
+//         //       MaterialPageRoute(
+//         //           builder: (context) =>
+//         //               LoginScreen()),
+//         //           (route) => false,
+//         //     );
+//         //   });
+//         break;
+//       default:
+//     }
+//   }
+//
+//   Future<void> _refreshData() async {
+//     await Future.delayed(Duration(seconds: 2));
+//     setState(() {
+//       getDataSession();
+//     });
+//   }
 
   @override
   Widget build(BuildContext context) {
@@ -194,21 +197,23 @@ class _DetailOrder extends State<DetailOrder> with WidgetsBindingObserver {
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        "Alamat Pengiriman",
+                                        data?.alamat ?? 'No Title',
+                                        // "Alamat Pengiriman",
                                         style: TextStyle(
                                           fontSize: 16,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
                                       Text(
-                                        "Ani|0812345",
+                                        "${data?.nama}|${data?.noHp}",
                                         style: TextStyle(
                                           color: Colors.black,
                                           fontSize: 14,
                                         ),
                                       ),
                                       Text(
-                                        "Jalan Raya Kalibata",
+                                        data?.alamat ?? 'No Title',
+                                        // "Jalan Raya Kalibata",
                                         style: TextStyle(
                                           color: Colors.black,
                                           fontSize: 14,
@@ -281,31 +286,32 @@ class _DetailOrder extends State<DetailOrder> with WidgetsBindingObserver {
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Image.asset(
-                                  'images/img2.png',
-                                  width: 100,
-                                ),
+                                // Image.asset(
+                                //   'images/img2.png',
+                                //   width: 100,
+                                // ),
                                 SizedBox(width: 20),
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        "Langit Biru",
+                                        data?.namaProduk ?? 'No Title',
+                                        // "Ketika Cinta Bertasbih",
                                         style: TextStyle(
                                           fontSize: 18,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
                                       Text(
-                                        "Jumlah : 1",
+                                        "Jumlah : ${data?.jumlah}",
                                         style: TextStyle(
                                           color: Colors.black,
                                           fontSize: 14,
                                         ),
                                       ),
                                       Text(
-                                        "Rp. 87.000",
+                                        "Rp. ${data?.harga}",
                                         style: TextStyle(
                                           color: Colors.black,
                                           fontSize: 14,
@@ -313,7 +319,7 @@ class _DetailOrder extends State<DetailOrder> with WidgetsBindingObserver {
                                       ),
                                       SizedBox(height: 20), // Menambahkan spasi antara teks dan tombol
                                       Text(
-                                        "Total Pesanan : Rp. 87.000",
+                                        "Total Pesanan : ${data?.totalBayar}",
                                         style: TextStyle(
                                           fontSize: 18,
                                           fontWeight: FontWeight.bold,
@@ -353,7 +359,8 @@ class _DetailOrder extends State<DetailOrder> with WidgetsBindingObserver {
                                           ),
                                           Spacer(),
                                           Text(
-                                            "H29ISKLE421",
+                                            data?.noPesanan ?? 'No Title',
+                                            // "H29ISKLE421",
                                             style: TextStyle(
                                               fontSize: 14,
                                               color: Colors.black,
@@ -378,31 +385,31 @@ class _DetailOrder extends State<DetailOrder> with WidgetsBindingObserver {
           ],
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.shopping_cart),
-            label: 'Keranjang',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.bookmarks_outlined),
-            label: 'Pesanan',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-        ],
-        currentIndex: _selectedIndex,
-        selectedItemColor: Colors.blue,
-        unselectedItemColor: Colors.blue,
-        backgroundColor: Color(0xFF87CEEB),
-        onTap: _onItemTapped,
-      ),
+      // bottomNavigationBar: BottomNavigationBar(
+      //   items: const <BottomNavigationBarItem>[
+      //     BottomNavigationBarItem(
+      //       icon: Icon(Icons.home),
+      //       label: 'Home',
+      //     ),
+      //     BottomNavigationBarItem(
+      //       icon: Icon(Icons.shopping_cart),
+      //       label: 'Keranjang',
+      //     ),
+      //     BottomNavigationBarItem(
+      //       icon: Icon(Icons.bookmarks_outlined),
+      //       label: 'Pesanan',
+      //     ),
+      //     BottomNavigationBarItem(
+      //       icon: Icon(Icons.person),
+      //       label: 'Profile',
+      //     ),
+      //   ],
+      //   currentIndex: _selectedIndex,
+      //   selectedItemColor: Colors.blue,
+      //   unselectedItemColor: Colors.blue,
+      //   backgroundColor: Color(0xFF87CEEB),
+      //   onTap: _onItemTapped,
+      // ),
     );
   }
 }
